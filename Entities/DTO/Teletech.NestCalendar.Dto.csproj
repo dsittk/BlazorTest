@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Configurations>Debug;Release;Stage</Configurations>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Teletech.NestCalendar.Entities\Teletech.NestCalendar.Entities.csproj" />
+	</ItemGroup>
+
+</Project>

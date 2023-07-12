@@ -1,0 +1,21 @@
+﻿@page "/pagetest"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@using System
+
+<h3>PageTest</h3>
+
+<h2>@varTest</h2>
+
+<div class="col-3">
+    Coucou CEST LE TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST
+</div>
+
+<MudButton>Se connecter</MudButton>
+
+@code {
+    public string? varTest;
+    protected override async Task OnInitializedAsync()
+    {
+        varTest = await localStorage.GetItemAsStringAsync("VarTest") == null ? "Aucune valeur" : await localStorage.GetItemAsStringAsync("VarTest");
+    }
+}

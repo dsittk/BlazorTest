@@ -1,0 +1,64 @@
+﻿@page "/fetchdata"
+@inject HttpClient Http
+@using Entities.DTO;
+
+<PageTitle>Weather forecast</PageTitle>
+
+<h1>Weather forecast</h1>
+
+<p>This component demonstrates fetching data from the server.</p>
+
+@if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id du calendrier</th>
+                <th>Méthode de distribution</th>
+                <th>Date de fin</th>
+                <th>Nom</th>
+                <th>Affichage</th>
+                <th>Durée de RDV par défaut</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var campaing in campaigns)
+            {
+                <tr>
+                    <td>@campaing.Id</td>
+                    <td>@campaing.DistributionMethod</td>
+                    <td>@campaing.End</td>
+                    <td>@campaing.Name</td>
+                    <td>@campaing.Prompt</td>
+                    <td>@campaing.DefaultRdvDuration</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private WeatherForecast[]? forecasts;
+    private List<CampaignDto> campaigns = new List<CampaignDto>(); 
+
+    protected override async Task OnInitializedAsync()
+    {
+        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+        campaigns = await Http.GetFromJsonAsync<List<CampaignDto>>("https://localhost:44339/api/campaigns");
+    }
+
+    public class WeatherForecast
+    {
+        public DateOnly Date { get; set; }
+
+        public int TemperatureC { get; set; }
+
+        public string? Summary { get; set; }
+
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+}

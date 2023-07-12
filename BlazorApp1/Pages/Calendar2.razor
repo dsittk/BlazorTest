@@ -1,0 +1,67 @@
+﻿@page "/calendar2"
+@inject NavigationManager _nav
+
+<h3>Calendar2</h3>
+<MudCalendar Items="_events"  CellClicked="CellClicked">
+
+    <CellTemplate>
+        <div class="pa-1" style="width: 100%; height: 100%;">
+            <MudChip Class="ma-0" Style="width: 100%; height: 100%; background-color:#7fff00;" OnClick="Transfer">@context.Text</MudChip>
+        </div>
+    </CellTemplate>
+</MudCalendar>
+@code {
+
+    private List<CalendarItem> _events = new()
+    {
+        new CalendarItem
+        {
+            Start = DateTime.Today.AddHours(10),
+            End = DateTime.Today.AddHours(14),
+            Text = "Event today"
+        },
+        new CalendarItem
+        {
+            Start = DateTime.Today.AddHours(13),
+            End = DateTime.Today.AddHours(14),
+            Text = "Event today"
+        },
+        new CalendarItem
+        {
+            Start = DateTime.Today.AddHours(13),
+            End = DateTime.Today.AddHours(14),
+            Text = "Event today"
+        },new CalendarItem
+        {
+            Start = DateTime.Today.AddHours(13),
+            End = DateTime.Today.AddHours(14),
+            Text = "Event today"
+        },new CalendarItem
+        {
+            Start = DateTime.Today.AddHours(13),
+            End = DateTime.Today.AddHours(14),
+            Text = "Event today"
+        },new CalendarItem
+        {
+            Start = DateTime.Today.AddHours(13),
+            End = DateTime.Today.AddHours(14),
+            Text = "Event today"
+        },
+        new CalendarItem
+        {
+            Start = DateTime.Today.AddDays(1).AddHours(11),
+            End = DateTime.Today.AddDays(1).AddHours(12.5),
+            Text = "Event tomorrow"
+        }
+    };
+
+    private void CellClicked()
+    {
+
+    }
+
+    private void Transfer()
+    {
+        this._nav.NavigateTo("/");
+    }
+}
