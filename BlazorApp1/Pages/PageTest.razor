@@ -1,21 +1,80 @@
 ﻿@page "/pagetest"
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject HttpClient Http
 @using System
+@using Entities.DTO
+@using System.Text.Json;
+@using System.Text;
+@using System.Net.Http.Headers;
 
 <h3>PageTest</h3>
-
-<h2>@varTest</h2>
 
 <div class="col-3">
     Coucou CEST LE TEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEST
 </div>
 
-<MudButton>Se connecter</MudButton>
+<MudTable Items="@entries" Hover="true" Breakpoint="MudBlazor.Breakpoint.Sm" LoadingProgressColor="MudBlazor.Color.Info">
+    <HeaderContent>
+        <MudTh>AdressBlockLvl</MudTh>
+        <MudTh>NivDescription</MudTh>
+        <MudTh>NivEmail</MudTh>
+        <MudTh>Nom Catégorie</MudTh>
+        <MudTh>Actif</MudTh>
+        <MudTh>Niv Téléphone</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="AdressBlockLvl">@context.AddressBlockLevel</MudTd>
+        <MudTd DataLabel="NivDescription">@context.DescriptionLevel</MudTd>
+        <MudTd DataLabel="NivEmail">@context.EmailLevel</MudTd>
+        <MudTd DataLabel="Nom Catégorie">@context.EntryCategoryName</MudTd>
+        <MudTd DataLabel="Actif">@context.IsActive</MudTd>
+        <MudTd DataLabel="Niv Téléphone">@context.PhoneLevel</MudTd>
+    </RowTemplate>
+</MudTable>
+
+<textarea>@token</textarea>
 
 @code {
     public string? varTest;
+    public string? token;
+    public List<PossibleEntryCategoryDto> entries = new List<PossibleEntryCategoryDto>();
+    CampaignTestDto campaign = new CampaignTestDto
+        {
+            CampaignId = null,
+            UserAccess = true
+        };
+
+    UserConnectDto user = new UserConnectDto
+        {
+            Password = "adm&root&1",
+            UserName = "admin",
+            ApplicationId = "9df40818-5427-4ad5-a7e4-7371d2eac4f4"
+        };
     protected override async Task OnInitializedAsync()
     {
         varTest = await localStorage.GetItemAsStringAsync("VarTest") == null ? "Aucune valeur" : await localStorage.GetItemAsStringAsync("VarTest");
+
+        var result = await Http.PostAsJsonAsync("https://teletech.fr/authenticationcorerest/api/Account/authenticate", user);
+        var data = await result.Content.ReadFromJsonAsync<JsonElement>();
+        this.token = data.GetProperty("token").GetString();
+
+        await localStorage.SetItemAsStringAsync("Token", token);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:44339/api/Calendars/C1FF08C1-DB88-4BF3-A844-E4EEACDA160C/possibleEntryCategory");
+        request.Content = new StringContent(JsonSerializer.Serialize(campaign), Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await Http.SendAsync(request);
+        entries = await response.Content.ReadFromJsonAsync<List<PossibleEntryCategoryDto>>();
+    }
+
+    private async void Connection()
+    {
+        
+    }
+
+    public async void GetEntriesCat()
+    {
+        
+        //await Http.PostAsJsonAsync("https://localhost:44339/api/Calendars/C1FF08C1-DB88-4BF3-A844-E4EEACDA160C/possibleEntryCategory", campaign, token).;
     }
 }

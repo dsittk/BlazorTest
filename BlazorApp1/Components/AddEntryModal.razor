@@ -1,0 +1,87 @@
+﻿@using Entities.DTO;
+@using System.Text.Json;
+@using System.Text;
+@using System.Net.Http.Headers;
+@inject HttpClient Http
+
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+<h3>Ajout d'une entrée</h3>
+
+<div class="col-4">
+    <MudSelect T="PossibleEntryCategoryDto" Label="Type d'entrée" Variant="MudBlazor.Variant.Outlined" AnchorOrigin="Origin.BottomCenter" ValueChanged="CheckDescAccess">
+        @foreach (var entrie in EntryCategory)
+        {
+            <MudSelectItem Value=entrie>@entrie.EntryCategoryName</MudSelectItem>
+        }
+    </MudSelect>
+</div>
+
+
+
+<div class="d-inline-flex mt-2 col-8">
+    <div>
+        <MudDatePicker Editable="true" Label="Date du rendez-vous" @bind-Date="entry.Start" DisableToolbar="true" />
+    </div>
+    <div>
+        Heure de début :
+        <RadzenDatePicker @bind-Value=startHour ShowTime="true" MinutesStep="15" TimeOnly="true" DateFormat="HH:mm" />
+    </div>
+    <div class="">
+        Heure de fin :
+        <RadzenDatePicker @bind-Value=endHour ShowTime="true" MinutesStep="15" TimeOnly="true" DateFormat="HH:mm" />
+    </div>
+</div>
+
+@if (displayDescription)
+{
+    <div>
+        <MudTextField @bind-Value="entry.Description" Label="Description" Variant="MudBlazor.Variant.Text"></MudTextField>
+    </div>
+}
+<div>
+    <MudButton Variant="MudBlazor.Variant.Filled" Style="background-color: darkgreen; color: white" OnClick="Validate" EndIcon="@Icons.Material.Filled.Add">Ajouter</MudButton>
+</div>
+
+
+@code {
+    [Parameter] public List<PossibleEntryCategoryDto> EntryCategory { get; set; }
+    [Parameter] public DateTime DateDebut { get; set; }
+    [Parameter] public string Token { get; set; }
+
+    public EntryDto entry = new EntryDto();
+    public TimeOnly startHour;
+    public TimeOnly endHour;
+
+    private bool displayDescription = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        entry.Start = DateDebut;
+        startHour = TimeOnly.FromDateTime(DateDebut);
+        endHour = TimeOnly.FromDateTime(DateDebut.AddHours(1));
+    }
+
+    public async void Validate()
+    {
+        DateTime dateFin = DateDebut.Date;
+        dateFin += endHour.ToTimeSpan();
+        entry.Duration = (float)(dateFin - DateDebut).TotalHours;
+        entry.CalendarId = Guid.Parse("C1FF08C1-DB88-4BF3-A844-E4EEACDA160C");
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:44339/api/Calendars/C1FF08C1-DB88-4BF3-A844-E4EEACDA160C/entries");
+        request.Content = new StringContent(JsonSerializer.Serialize(entry), Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        var response = await Http.SendAsync(request);
+    }
+
+    private void UpdateTimeFields(DateTime date)
+    {
+        
+    }
+
+    private void CheckDescAccess()
+    {
+        displayDescription = !displayDescription;
+    }
+}

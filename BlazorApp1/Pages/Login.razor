@@ -1,0 +1,63 @@
+﻿@page "/"
+@using System.Net.Http.Headers;
+@using Amazon.CognitoIdentityProvider;
+@using Amazon.Extensions.CognitoAuthentication;
+@using AWSSDK.Runtime.Internal.Util;
+@using BlazorApp1.Services.Authentication;
+@using System.ComponentModel;
+@inject IJSRuntime JS
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+<h3>Login</h3>
+<input @bind="username" placeholder="Username" />
+<input @bind="password" type="password" placeholder="Password" />
+<button @onclick="SignIn">Sign In</button>
+
+<div id="recaptcha_container"></div>
+
+@code {
+    [Inject]
+    public IAuthenticationService authService { get; set; }  
+
+    private string? username;
+    private string? password;
+    private string? token;
+    private string captchaResponse;
+    private int WidgetId;
+
+    public string reCAPTCHA_response;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("loadScript", "https://www.google.com/recaptcha/api.js");
+
+        await JS.InvokeVoidAsync("loadScript", "Scripts/JsOfReCAPTCHA.js");
+
+        if (firstRender)
+        {
+            WidgetId = await JS.InvokeAsync<int>("render_recaptcha", DotNetObjectReference.Create(this), "recaptcha_container", "6LegAFInAAAAAPkU8dCYBUAIENJfSg9WZJ_vgVaF");
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void CallbackOnSuccess(string response)
+    {
+        reCAPTCHA_response = response;
+    }
+
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void CallbackOnExpired()
+    {
+        //...
+    }
+
+    private async Task SignIn()
+    {
+        var signInResponse = await authService.SignInAsync(username, password);
+        await localStorage.SetItemAsStringAsync("idToken", signInResponse.AuthenticationResult.IdToken);
+        token = await localStorage.GetItemAsStringAsync("idToken");
+
+    }
+}

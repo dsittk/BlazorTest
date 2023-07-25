@@ -1,6 +1,8 @@
 ﻿@page "/fetchdata"
 @inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 @using Entities.DTO;
+@using System.Net.Http.Headers;
 
 <PageTitle>Weather forecast</PageTitle>
 
@@ -48,7 +50,10 @@ else
     protected override async Task OnInitializedAsync()
     {
         forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
-        campaigns = await Http.GetFromJsonAsync<List<CampaignDto>>("https://localhost:44339/api/campaigns");
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://3oxj8eayr4.execute-api.eu-west-3.amazonaws.com/api/campaigns");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await localStorage.GetItemAsStringAsync("idToken"));
+        var response = await Http.SendAsync(request);
+        campaigns = await response.Content.ReadFromJsonAsync<List<CampaignDto>>();
     }
 
     public class WeatherForecast

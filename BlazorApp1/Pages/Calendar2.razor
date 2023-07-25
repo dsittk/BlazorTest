@@ -1,16 +1,46 @@
 ﻿@page "/calendar2"
+@using BlazorApp1.Components;
+@using Entities.DTO;
+@using System.Text.Json;
+@using System.Net.Http.Headers;
+@using System.Text;
 @inject NavigationManager _nav
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject HttpClient Http
 
 <h3>Calendar2</h3>
-<MudCalendar Items="_events"  CellClicked="CellClicked">
-
+<MudCalendar Items="_events" CellClicked="CellClicked">
     <CellTemplate>
         <div class="pa-1" style="width: 100%; height: 100%;">
-            <MudChip Class="ma-0" Style="width: 100%; height: 100%; background-color:#7fff00;" OnClick="Transfer">@context.Text</MudChip>
+            <MudMenu ActivationEvent="@MouseEvent.RightClick" AnchorOrigin="Origin.CenterRight">
+                <ActivatorContent>
+                    <MudButton Style="width: 100%; height: 100%; background-color:#7fff00;" OnClick="Transfer">@context.Text</MudButton>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem OnClick="ModalDelete"><MudIcon Icon="@Icons.Material.Outlined.Delete"></MudIcon>Supprimer l'entrée</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
         </div>
     </CellTemplate>
 </MudCalendar>
+
 @code {
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+
+    public string? token;
+    public List<PossibleEntryCategoryDto> entriesCategory = new List<PossibleEntryCategoryDto>();
+    CampaignTestDto campaign = new CampaignTestDto
+        {
+            CampaignId = null,
+            UserAccess = true
+        };
+
+    UserConnectDto user = new UserConnectDto
+        {
+            Password = "adm&root&1",
+            UserName = "admin",
+            ApplicationId = "9df40818-5427-4ad5-a7e4-7371d2eac4f4"
+        };
 
     private List<CalendarItem> _events = new()
     {
@@ -18,13 +48,13 @@
         {
             Start = DateTime.Today.AddHours(10),
             End = DateTime.Today.AddHours(14),
-            Text = "Event today"
+            Text = "Event 4"
         },
         new CalendarItem
         {
             Start = DateTime.Today.AddHours(13),
-            End = DateTime.Today.AddHours(14),
-            Text = "Event today"
+            End = DateTime.Today.AddHours(15),
+            Text = "Event 2"
         },
         new CalendarItem
         {
@@ -36,30 +66,41 @@
             Start = DateTime.Today.AddHours(13),
             End = DateTime.Today.AddHours(14),
             Text = "Event today"
-        },new CalendarItem
-        {
-            Start = DateTime.Today.AddHours(13),
-            End = DateTime.Today.AddHours(14),
-            Text = "Event today"
-        },new CalendarItem
-        {
-            Start = DateTime.Today.AddHours(13),
-            End = DateTime.Today.AddHours(14),
-            Text = "Event today"
-        },
-        new CalendarItem
-        {
-            Start = DateTime.Today.AddDays(1).AddHours(11),
-            End = DateTime.Today.AddDays(1).AddHours(12.5),
-            Text = "Event tomorrow"
         }
     };
 
-    private void CellClicked()
+    protected override async Task OnInitializedAsync()
     {
+        var result = await Http.PostAsJsonAsync("https://teletech.fr/authenticationcorerest/api/Account/authenticate", user);
+        var data = await result.Content.ReadFromJsonAsync<JsonElement>();
+        this.token = data.GetProperty("token").GetString();
 
+        await localStorage.SetItemAsStringAsync("Token", token);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:44339/api/Calendars/C1FF08C1-DB88-4BF3-A844-E4EEACDA160C/possibleEntryCategory");
+        request.Content = new StringContent(JsonSerializer.Serialize(campaign), Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await Http.SendAsync(request);
+        entriesCategory = await response.Content.ReadFromJsonAsync<List<PossibleEntryCategoryDto>>();
     }
 
+    private void CellClicked(DateTime dateTime)
+    {
+        var parameters = new ModalParameters().Add(nameof(AddEntryModal.EntryCategory), entriesCategory);
+        parameters.Add(nameof(AddEntryModal.DateDebut), dateTime);
+        parameters.Add(nameof(AddEntryModal.Token), token);
+
+        var options = new ModalOptions()
+            {
+                Size = ModalSize.ExtraLarge
+            };
+        Modal.Show<AddEntryModal>("Ajouter une entry", parameters, options);
+    }
+
+    private void ModalDelete()
+    {
+        Modal.Show<DeleteEntryModal>("Supprimer un entry");
+    }
     private void Transfer()
     {
         this._nav.NavigateTo("/");

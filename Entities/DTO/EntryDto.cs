@@ -39,7 +39,7 @@ namespace Entities.DTO
         /// </summary>
         public Guid? PreviousEntryId { get; set; }
 
-        public DateTime Start { get; set; }
+        public DateTime? Start { get; set; }
         public string? StaticDescription { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string? UpdatedBy { get; set; }
