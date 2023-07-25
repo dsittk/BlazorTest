@@ -7,6 +7,7 @@
 @using System.ComponentModel;
 @inject IJSRuntime JS
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject ISnackbar Snackbar
 
 <h3>Login</h3>
 <input @bind="username" placeholder="Username" />
@@ -26,7 +27,7 @@
     private string captchaResponse;
     private int WidgetId;
 
-    public string reCAPTCHA_response;
+    public string? reCAPTCHA_response;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -56,9 +57,16 @@
 
     private async Task SignIn()
     {
-        var signInResponse = await authService.SignInAsync(username, password);
-        await localStorage.SetItemAsStringAsync("idToken", signInResponse.AuthenticationResult.IdToken);
-        token = await localStorage.GetItemAsStringAsync("idToken");
+        if(reCAPTCHA_response != null)
+        {
+            var signInResponse = await authService.SignInAsync(username, password);
+            await localStorage.SetItemAsStringAsync("idToken", signInResponse.AuthenticationResult.IdToken);
+            token = await localStorage.GetItemAsStringAsync("idToken");
+        }
+        else
+        {
+            Snackbar.Add("Veillez remplir le Captcha.", Severity.Error);
+        }
 
     }
 }
